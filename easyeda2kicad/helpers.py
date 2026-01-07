@@ -99,8 +99,25 @@ def add_component_in_symbol_lib_file(
             lib_file.write(component_content)
     elif kicad_version == KicadVersion.v6:
         with open(file=lib_path, mode="rb+") as lib_file:
-            lib_file.seek(-2, 2)
-            lib_file.truncate()
+            # Find the last non-whitespace character
+            lib_file.seek(0, 2)  # Go to end of file
+            position = lib_file.tell() - 1
+            
+            # Move backward until we find a non-whitespace character
+            while position > 0:
+                lib_file.seek(position)
+                char = lib_file.read(1)
+                if not char.isspace():
+                    # Found the last non-whitespace character
+                    if char == b')':
+                        # Truncate before this position
+                        position -= 1
+                        lib_file.seek(position)
+                        lib_file.truncate()
+                    break
+                position -= 1
+                
+            # Append new content and closing parenthesis
             lib_file.write(component_content.encode(encoding="utf-8"))
             lib_file.write("\n)".encode(encoding="utf-8"))
 
