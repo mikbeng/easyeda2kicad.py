@@ -106,7 +106,10 @@ KI_LAYERS = {
     13: "F.Fab",  # TopAssembly
     14: "B.Fab",  # BottomAssembly
     15: "Dwgs.User",  # Mechanical
-    99: "F.CrtYd",  # ComponentShapeLayer (LIBBODY) - invisible in EasyEDA, maps to courtyard in KiCad
+    # ComponentShapeLayer (LIBBODY): the component body outline, invisible in
+    # EasyEDA. It hugs the body, so leads/pads stick out of it and it cannot
+    # serve as a courtyard; it is the assembly (Fab) outline.
+    99: "F.Fab",
     100: "F.Fab",  # LeadShapeLayer - lead shapes for fabrication
     101: "F.SilkS",  # ComponentPolarityLayer - polarity markings on silkscreen
 }
@@ -206,6 +209,8 @@ class KiFootprintVia:
 class KiFootprintSolidRegion:
     layer: str
     points: list[tuple[float, float]]
+    # True for layer 99 body outlines, which EasyEDA does not fill.
+    outline_only: bool = False
 
 
 # ---------------- COPPER AREA ----------------

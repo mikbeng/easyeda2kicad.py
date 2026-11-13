@@ -204,7 +204,7 @@ def rotate(x: float, y: float, degrees: float) -> tuple[float, float]:
 
 # Layers on which SOLIDREGION is imported.
 # Layer 5/6 (F.Paste/B.Paste) are skipped — paste areas belong to pad definitions, not graphics.
-# Layer 99 (ComponentShapeLayer/LIBBODY) is not visible in EasyEDA; imported as F.CrtYd outline.
+# Layer 99 (ComponentShapeLayer/LIBBODY) is not visible in EasyEDA; imported as an F.Fab body outline.
 # Layer 100 is skipped — decorative lead shapes.
 # Layer 101 is skipped — decorative pin circles.
 _SOLID_REGION_LAYERS = {3, 4, 13, 14, 99}
@@ -273,7 +273,9 @@ def _convert_solid_region(
         )
         return None
 
-    return KiFootprintSolidRegion(layer=layer, points=points)
+    return KiFootprintSolidRegion(
+        layer=layer, points=points, outline_only=ee_region.layer_id == 99
+    )
 
 
 # ---------------------------------------
@@ -652,7 +654,7 @@ class ExporterFootprintKicad:
             ki_lib += KI_TEXT.format(**vars(text))
 
         for region in ki.solid_regions:
-            if region.layer == "F.CrtYd":
+            if region.outline_only:
                 # Layer 99 (ComponentShapeLayer) has no fill in EasyEDA — emit as outline lines.
                 pts = region.points
                 for i in range(len(pts) - 1):
@@ -661,8 +663,8 @@ class ExporterFootprintKicad:
                         start_y=pts[i][1],
                         end_x=pts[i + 1][0],
                         end_y=pts[i + 1][1],
-                        layers="F.CrtYd",
-                        stroke_width=0.05,
+                        layers=region.layer,
+                        stroke_width=0.1,
                     )
             else:
                 pts_str = " ".join(f"(xy {x:.6f} {y:.6f})" for x, y in region.points)
