@@ -189,7 +189,16 @@ class EasyedaApi:
                     return {}
 
             if not api_response or api_response.get("success") is False:
-                logging.debug(f"{api_response}")
+                message = ""
+                if isinstance(api_response, dict):
+                    message = str(api_response.get("message") or "").strip()
+                if message:
+                    # Logged at error so callers can tell a missing component
+                    # from a transport failure. "Component not found" is the
+                    # usual text when EasyEDA has no CAD data for an LCSC id.
+                    logging.error(f"EasyEDA API: {message}")
+                else:
+                    logging.debug(f"{api_response}")
                 return {}
 
             # Write to cache

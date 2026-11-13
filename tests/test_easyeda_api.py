@@ -5,6 +5,7 @@ from __future__ import annotations
 import gzip
 import io
 import json
+import logging
 import urllib.error
 from pathlib import Path
 from typing import Any
@@ -277,14 +278,18 @@ class TestGetInfoNetworkPath:
         cache_file = api._get_cache_path("C44444", "json")
         assert cache_file.exists()
 
-    def test_success_false_returns_empty(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_success_false_returns_empty(
+        self, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+    ) -> None:
         api = EasyedaApi(use_cache=False)
         payload = {"success": False, "message": "not found"}
         body = json.dumps(payload).encode()
         monkeypatch.setattr(
             "urllib.request.urlopen", lambda *a, **kw: _fake_response(body)
         )
-        assert api.get_info_from_easyeda_api("C55555") == {}
+        with caplog.at_level(logging.ERROR):
+            assert api.get_info_from_easyeda_api("C55555") == {}
+        assert "EasyEDA API: not found" in caplog.text
 
 
 # ---------------------------------------------------------------------------
